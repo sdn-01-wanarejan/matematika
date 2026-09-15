@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FBE3EC">
+<title>Juara Penjumlahan — SDN 01 Wanarejan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ DASAR ============ */
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0; overflow:hidden; touch-action:manipulation;
+  font-family:'Baloo 2','Comic Sans MS','Arial Rounded MT Bold',sans-serif;
+  background:var(--bg); color:var(--ink);
+  transition:background .5s;
+}
+button{font-family:inherit; cursor:pointer; border:none; touch-action:manipulation}
+svg{display:inline-block; vertical-align:middle}
+
+/* ============ TEMA (Sakura / Robo / Alfa) ============ */
+body[data-tema="sakura"]{
+  --bg:#FBE3EC; --panel:#FFFFFF; --panel2:#FFF6F9; --ink:#4E2A38; --sub:#A6707F;
+  --aksen:#E4567E; --aksen-bayang:#BE3E64; --aksen-teks:#FFFFFF;
+  --aksen-lembut:#FAD6E1; --aksen-hint:#FDECF2; --aksen2:#F6B93B;
+  --benar:#2FA772; --benar-teks:#FFFFFF; --salah:#E4574F;
+  --border:#F2C6D4; --bayang:rgba(78,42,56,.14); --hati:#ED5C9C; --mati:#E3CBD6;
+}
+body[data-tema="robot"]{
+  --bg:#E3F0FD; --panel:#FFFFFF; --panel2:#F2F8FE; --ink:#1D3A5F; --sub:#64809F;
+  --aksen:#2176C7; --aksen-bayang:#17558F; --aksen-teks:#FFFFFF;
+  --aksen-lembut:#D3E7F9; --aksen-hint:#EAF3FC; --aksen2:#FFC93C;
+  --benar:#2FA772; --benar-teks:#FFFFFF; --salah:#E4574F;
+  --border:#C8DFF4; --bayang:rgba(29,58,95,.13); --hati:#F2668B; --mati:#D9DFE8;
+}
+body[data-tema="alien"]{
+  --bg:#151D38; --panel:#212D54; --panel2:#2A3762; --ink:#F2F5FF; --sub:#9AA7D6;
+  --aksen:#FFD166; --aksen-bayang:#C2952C; --aksen-teks:#232B4D;
+  --aksen-lembut:#43507F; --aksen-hint:#FFF3D6; --aksen2:#4CC9F0;
+  --benar:#06D6A0; --benar-teks:#0B2E25; --salah:#EF476F;
+  --border:#36436F; --bayang:rgba(0,0,0,.38); --hati:#EF476F; --mati:#3E4A78;
+}
+
+/* hiasan latar halus per tema */
+#latar{position:fixed; inset:0; z-index:0; pointer-events:none}
+body[data-tema="sakura"] #latar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cg fill='%23F2B7CC'%3E%3Cellipse cx='26' cy='30' rx='8' ry='12' transform='rotate(28 26 30)'/%3E%3Cellipse cx='112' cy='102' rx='8' ry='12' transform='rotate(-30 112 102)'/%3E%3Cellipse cx='92' cy='22' rx='5' ry='8' transform='rotate(60 92 22)'/%3E%3Cellipse cx='22' cy='118' rx='5' ry='8' transform='rotate(10 22 118)'/%3E%3C/g%3E%3C/svg%3E")}
+body[data-tema="robot"] #latar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='%23BCD7F3'%3E%3Crect x='18' y='14' width='13' height='13' rx='4'/%3E%3Crect x='78' y='70' width='13' height='13' rx='4'/%3E%3Ccircle cx='52' cy='102' r='5'/%3E%3Ccircle cx='100' cy='32' r='5'/%3E%3C/g%3E%3C/svg%3E")}
+body[data-tema="alien"] #latar{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cg fill='%238FA3E8' opacity='0.55'%3E%3Cpath d='M26 26l3 8 8 3-8 3-3 8-3-8-8-3 8-3z'/%3E%3Cpath d='M120 90l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5z'/%3E%3Ccircle cx='80' cy='40' r='3'/%3E%3Ccircle cx='40' cy='130' r='3'/%3E%3C/g%3E%3C/svg%3E")}
+
+/* ============ KERANGKA LAYAR ============ */
+#app{position:relative; z-index:1; height:100dvh; max-width:560px; margin:0 auto}
+.layar{display:none; height:100%; overflow-y:auto;
+  padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+.layar.aktif{display:block; animation:muncul .35s ease}
+#layarMain.aktif{display:flex; flex-direction:column; overflow:hidden}
+#layarHasil.aktif,#layarTamat.aktif{display:flex; overflow-y:auto}
+@keyframes muncul{from{opacity:0; transform:translateY(14px)}to{opacity:1; transform:none}}
+
+/* ============ TOMBOL ============ */
+.btn{border-radius:20px; padding:14px 20px; font-weight:800; font-size:17px;
+  transition:transform .07s, box-shadow .07s; letter-spacing:.4px}
+.btn.utama{background:var(--aksen); color:var(--aksen-teks);
+  box-shadow:0 6px 0 var(--aksen-bayang)}
+.btn.ghost{background:var(--panel); color:var(--ink); border:3px solid var(--border);
+  box-shadow:0 5px 0 var(--bayang)}
+.btn.utama:active,.btn.ghost:active{transform:translateY(4px); box-shadow:0 1px 0 var(--bayang)}
+.btn.besar{width:100%; padding:18px; font-size:21px; border-radius:24px; margin-top:16px}
+.btn.tautan{background:none; color:var(--sub); box-shadow:none; font-size:15px; padding:10px}
+.ikon-btn{width:44px; height:44px; border-radius:14px; background:var(--panel);
+  border:3px solid var(--border); color:var(--ink); display:flex;
+  align-items:center; justify-content:center; box-shadow:0 4px 0 var(--bayang); flex-shrink:0}
+.ikon-btn:active{transform:translateY(3px); box-shadow:none}
+.ikon-btn svg{width:22px; height:22px}
+
+/* ============ PANEL ============ */
+.panel{background:var(--panel); border:3px solid var(--border); border-radius:24px;
+  padding:16px; box-shadow:0 7px 0 var(--bayang)}
+
+/* ============ BERANDA ============ */
+.identitas{text-align:center; color:var(--sub); font-size:13.5px; line-height:1.55; margin:4px 0 2px}
+.identitas b{color:var(--ink)}
+.hero{text-align:center; margin:6px 0 16px}
+.hero-maskot{display:flex; justify-content:center; gap:4px}
+.hero-m{width:66px; height:66px}
+.hero-m:nth-child(1){transform:rotate(-7deg)}
+.hero-m:nth-child(2){animation:mengambang 3s ease-in-out infinite; transform:translateY(-6px)}
+.hero-m:nth-child(3){transform:rotate(7deg)}
+@keyframes mengambang{50%{transform:translateY(-6px)}}
+.hero h1{font-size:clamp(34px,9vw,44px); line-height:.95; margin:8px 0 4px; letter-spacing:.5px}
+.hero h1 span{display:block}
+.hero h1 .j1{color:var(--ink)}
+.hero h1 .j2{color:var(--aksen)}
+.hero .sub{margin:0; color:var(--sub); font-weight:700; font-size:14px}
+.langkah{margin-bottom:14px}
+.langkah h2{display:flex; align-items:center; gap:9px; font-size:17px; margin:0 0 10px}
+.angka-langkah{width:29px; height:29px; border-radius:10px; background:var(--aksen);
+  color:var(--aksen-teks); font-size:16px; display:inline-flex; align-items:center;
+  justify-content:center; box-shadow:0 3px 0 var(--aksen-bayang); flex-shrink:0}
+
+/* tombol pilih nama (dropdown) */
+.btn-nama{width:100%; display:flex; align-items:center; gap:12px; padding:14px 16px;
+  background:var(--panel2); border:3px solid var(--border); border-radius:16px;
+  color:var(--ink); font-weight:800; font-size:16px; text-align:left;
+  transition:transform .07s, box-shadow .07s; box-shadow:0 4px 0 var(--bayang)}
+.btn-nama:active{transform:translateY(3px); box-shadow:0 1px 0 var(--bayang)}
+.btn-nama .nu{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.btn-nama .nu.kosong{color:var(--sub); font-weight:700}
+.btn-nama.pilih{background:var(--aksen-lembut); border-color:var(--aksen)}
+.btn-nama > svg{width:22px; height:22px; flex-shrink:0}
+.btn-nama .panah{color:var(--sub)}
+
+.kartu-tema{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+.kt{background:var(--panel2); border:3px solid var(--border); border-radius:18px;
+  padding:10px 4px 8px; text-align:center; position:relative; transition:.15s}
+.kt p{margin:4px 0 0; font-weight:800; font-size:15px}
+.kt-maskot{width:56px; height:56px; margin:0 auto}
+.kt-cek{position:absolute; top:-11px; right:-6px; width:26px; height:26px; border-radius:50%;
+  background:var(--aksen); color:var(--aksen-teks); display:none; align-items:center;
+  justify-content:center; box-shadow:0 2px 0 var(--aksen-bayang)}
+.kt-cek svg{width:14px; height:14px}
+.kt.pilih{border-color:var(--aksen); background:var(--aksen-lembut); transform:translateY(-2px)}
+.kt.pilih .kt-cek{display:flex}
+.info-bawah{text-align:center; color:var(--sub); font-size:12.5px; font-weight:700; margin:14px 0 2px}
+
+/* ============ MASKOT ============ */
+.maskot-w .f-senang,.maskot-w .f-sedih{display:none}
+.maskot-w[data-mood="senang"] .f-senang{display:block}
+.maskot-w[data-mood="senang"] .f-biasa{display:none}
+.maskot-w[data-mood="sedih"] .f-sedih{display:block}
+.maskot-w[data-mood="sedih"] .f-biasa{display:none}
+.maskot-w .maskot{width:100%; height:100%; display:block}
+.maskot-w[data-mood="senang"] .maskot{animation:lompat .6s ease}
+.maskot-w[data-mood="sedih"] .maskot{animation:goyang .5s ease}
+@keyframes lompat{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-11px) scale(1.06)}}
+
+/* ============ PETA LEVEL ============ */
+.peta-top{display:flex; align-items:center; gap:10px; margin-bottom:6px}
+.peta-siwa{flex:1; display:flex; gap:10px; align-items:center; background:var(--panel);
+  border:3px solid var(--border); border-radius:18px; padding:7px 14px; box-shadow:0 5px 0 var(--bayang); min-width:0}
+.peta-maskot{width:46px; height:46px; flex-shrink:0}
+.peta-siwa .hi{font-size:11.5px; color:var(--sub); margin:0; font-weight:700}
+.peta-siwa .peta-nama{margin:0; font-weight:800; font-size:15.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.judul-peta{text-align:center; font-size:22px; margin:14px 0 12px}
+.kartu-level{display:flex; gap:12px; align-items:center; background:var(--panel);
+  border:3px solid var(--border); border-radius:22px; padding:14px; margin-bottom:12px;
+  box-shadow:0 6px 0 var(--bayang)}
+.kartu-level.terkunci{opacity:.55; filter:grayscale(.7)}
+.lvl-no{width:58px; height:58px; border-radius:18px; background:var(--aksen);
+  color:var(--aksen-teks); font-size:23px; font-weight:800; display:flex;
+  align-items:center; justify-content:center; box-shadow:0 4px 0 var(--aksen-bayang); flex-shrink:0}
+.lvl-info{flex:1; min-width:0}
+.lvl-info h3{margin:0; font-size:16.5px}
+.lvl-ket{margin:2px 0 0; color:var(--sub); font-size:13px; font-weight:700}
+.lvl-meta{margin:4px 0 0; color:var(--sub); font-size:12.5px; font-weight:700}
+.lvl-meta svg{width:13px; height:13px}
+.lvl-bintang{display:flex; gap:3px; margin-top:5px}
+.lvl-bintang span{width:16px; height:16px; display:inline-flex; color:var(--mati)}
+.lvl-bintang span.on{color:#F6B93B}
+.btn.kecil{padding:11px 16px; font-size:15px; border-radius:16px; flex-shrink:0}
+.lvl-kunci{display:flex; flex-direction:column; align-items:center; gap:3px;
+  color:var(--sub); font-weight:800; flex-shrink:0; padding-right:4px}
+.lvl-kunci svg{width:24px; height:24px}
+.lvl-kunci small{font-size:11px}
+
+/* ============ LAYAR MAIN (ukuran menyesuaikan tinggi layar) ============ */
+.topbar{display:flex; align-items:center; gap:10px; position:relative; z-index:6}
+.lvl-badge{background:var(--panel); border:3px solid var(--border); padding:7px 15px;
+  border-radius:14px; font-weight:800; font-size:15px; box-shadow:0 4px 0 var(--bayang)}
+.timer{margin-left:auto; display:flex; gap:7px; align-items:center; font-weight:800;
+  font-size:16px; background:var(--panel); border:3px solid var(--border); padding:7px 13px;
+  border-radius:14px; box-shadow:0 4px 0 var(--bayang); font-variant-numeric:tabular-nums}
+.timer svg{width:16px; height:16px}
+.timer.mendesak{background:var(--salah); border-color:var(--salah); color:#fff; animation:denyut 1s infinite}
+@keyframes denyut{50%{transform:scale(1.07)}}
+.statusbar{display:flex; align-items:center; gap:10px; margin:12px 0 2px;
+  position:relative; z-index:6}
+.hati{display:flex; gap:4px}
+.hati .h{width:26px; height:26px; display:inline-flex; color:var(--hati);
+  transition:transform .35s, opacity .35s, filter .35s}
+.hati .h svg{width:100%; height:100%}
+.hati .h.hilang{color:var(--mati); transform:scale(.72) rotate(-9deg); opacity:.55}
+.dots{flex:1; display:flex; gap:5px; justify-content:center}
+.dots .d{width:11px; height:11px; border-radius:50%; border:2.5px solid var(--border)}
+.dots .d.isi{background:var(--benar); border-color:var(--benar)}
+.dots .d.slh{background:var(--salah); border-color:var(--salah)}
+.dots .d.skrng{border-color:var(--aksen); animation:denyut 1.2s infinite}
+.area-soal{flex:1; display:flex; align-items:center; justify-content:center;
+  min-height:0; padding:14px 0 2px; position:relative}
+.kertas-wrap{position:relative; width:100%; max-width:360px}
+.kertas{background:#FFFFFF; border:4px solid #EFE9E2; border-radius:26px;
+  box-shadow:0 8px 0 rgba(43,34,28,.09);
+  padding:clamp(22px,3.5vh,30px) 22px clamp(16px,3vh,24px);
+  position:relative; transform-origin:top center}
+.kertas-tag{position:absolute; top:-15px; left:16px; background:var(--aksen);
+  color:var(--aksen-teks); font-size:12.5px; font-weight:800; padding:4px 14px;
+  border-radius:999px; box-shadow:0 3px 0 var(--aksen-bayang); letter-spacing:.5px; z-index:2}
+.susun{display:flex; flex-direction:column; align-items:center;
+  gap:min(7px,1vh); width:fit-content; margin:0 auto; min-width:100%}
+.s-baris{display:flex; gap:min(7px,1vh); justify-content:center}
+.plus{width:min(40px,10vw); display:flex; align-items:center; justify-content:center;
+  font-size:clamp(26px,5vh,34px); font-weight:800; color:#3A3430; flex-shrink:0}
+.s-sp{width:min(40px,10vw); flex-shrink:0}
+.dg{width:min(60px,15vw); height:clamp(44px,8.6vh,68px);
+  background:#FBF7F2; border:3px solid #E2D9CE; border-radius:16px;
+  font-size:clamp(24px,5.2vh,40px); font-weight:800; color:#3A3430;
+  display:flex; align-items:center; justify-content:center}
+.dg.ja{border-color:var(--aksen); background:#fff}
+.dg.ja.aktif{background:var(--aksen-hint); animation:kotakAktif 1.4s infinite}
+@keyframes kotakAktif{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}50%{box-shadow:0 0 0 5px var(--aksen-lembut)}}
+.s-garis{width:100%; height:5px; border-radius:3px; background:#3A3430;
+  margin:min(4px,.6vh) 0 min(8px,1.2vh)}
+.kertas-wrap.goyang{animation:goyang .45s}
+@keyframes goyang{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}
+  40%{transform:translateX(9px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.maskot-pojok{position:absolute; top:calc(clamp(64px,13vh,92px) * -0.33); right:0;
+  width:clamp(64px,13vh,92px); height:clamp(64px,13vh,92px);
+  z-index:4; pointer-events:none}
+/* overlay benar / salah */
+.ov-fb{position:absolute; inset:0; z-index:3; border-radius:26px; display:none;
+  flex-direction:column; align-items:center; justify-content:center; gap:6px}
+.ov-fb.benar{display:flex; background:rgba(56,178,122,.17); animation:popIn .3s}
+.ov-fb.salah{display:flex; background:rgba(228,87,79,.20); animation:popIn .3s}
+@keyframes popIn{from{transform:scale(.75); opacity:0}}
+.ov-ikon{width:82px; height:82px; border-radius:50%; display:flex;
+  align-items:center; justify-content:center}
+.ov-ikon svg{width:44px; height:44px}
+.ov-fb.benar .ov-ikon{background:var(--benar); color:var(--benar-teks)}
+.ov-fb.salah .ov-ikon{background:var(--salah); color:#fff}
+.ov-fb p{margin:0; font-size:24px; font-weight:800}
+.ov-fb.benar p{color:#2FA772}
+.ov-fb.salah p{color:#E4574F}
+.ov-sub{margin:0; font-size:15px; font-weight:700; color:#B94A46}
+/* keypad — selalu paling depan supaya pasti bisa ditekan */
+.keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:min(10px,1.4vh);
+  margin-top:min(14px,2vh); position:relative; z-index:6}
+.k{height:clamp(48px,8.8vh,64px); border-radius:18px; border:3px solid var(--border);
+  background:var(--panel); color:var(--ink); font-size:clamp(20px,4.2vh,27px);
+  font-weight:800; box-shadow:0 5px 0 var(--bayang);
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .06s, box-shadow .06s}
+.k:active{transform:translateY(4px); box-shadow:0 1px 0 var(--bayang)}
+.k-del{color:var(--salah)}
+.k-del svg{width:clamp(22px,4vh,27px); height:clamp(22px,4vh,27px)}
+.k-ok{background:var(--benar); color:var(--benar-teks); border-color:var(--benar);
+  box-shadow:0 5px 0 rgba(0,0,0,.25); font-size:clamp(19px,4vh,24px); letter-spacing:2px}
+
+/* ============ HASIL & TAMAT ============ */
+.panel.hasil{max-width:420px; width:100%; margin:auto; text-align:center; padding:0 20px 24px}
+.hasil-maskot{width:126px; height:126px; margin:-80px auto 2px; position:relative; z-index:2}
+.panel.hasil h2{margin:2px 0 2px; font-size:27px}
+.hasil-sub{margin:0; color:var(--sub); font-weight:700; font-size:14.5px; line-height:1.45}
+.bintang-row{display:flex; justify-content:center; gap:8px; margin:12px 0 2px}
+.bintang-row .bs{width:44px; height:44px; display:inline-flex; color:var(--mati)}
+.bintang-row .bs.on{color:#F6B93B; animation:popB .5s backwards}
+@keyframes popB{from{transform:scale(0) rotate(-40deg)}70%{transform:scale(1.2)}to{transform:scale(1)}}
+.nilai-besar{font-size:62px; font-weight:800; line-height:1.05; margin:2px 0 0}
+.nilai-besar small{font-size:20px; color:var(--sub); font-weight:700}
+.chips{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:12px 0 4px}
+.chip{background:var(--panel2); border:2.5px solid var(--border); border-radius:14px;
+  padding:8px 4px; font-size:11px; color:var(--sub); font-weight:700; letter-spacing:.4px}
+.chip b{display:block; font-size:17px; color:var(--ink); margin-top:2px}
+.kirim-bar{display:flex; align-items:center; justify-content:center; gap:8px;
+  margin:8px 0 14px; font-size:13.5px; font-weight:700; color:var(--sub); min-height:26px; flex-wrap:wrap}
+.kb-dot{width:10px; height:10px; border-radius:50%; background:#C9CDD6; flex-shrink:0}
+.kirim-bar.mengirim .kb-dot{background:var(--aksen2); animation:denyut .8s infinite}
+.kirim-bar.ok{color:var(--benar)}
+.kb-oke{width:16px; height:16px; display:inline-flex}
+.kb-oke svg{width:100%; height:100%}
+.kirim-bar.gagal{color:var(--salah)}
+.kb-msg{flex-basis:100%; text-align:center; font-size:12.5px; line-height:1.45}
+.kb-ulang{background:var(--salah); color:#fff; border-radius:10px; padding:4px 12px;
+  font-weight:800; font-size:12.5px}
+.tombol-hasil{display:flex; flex-direction:column; gap:10px}
+.rekap{display:flex; justify-content:center; gap:20px; margin:12px 0 4px}
+.rk{display:flex; flex-direction:column; align-items:center; gap:4px;
+  font-weight:800; font-size:13px; color:var(--sub)}
+.rk .bs{width:18px; height:18px; display:inline-flex; color:var(--mati)}
+.rk .bs.on{color:#F6B13B}
+.rk div{display:flex; gap:2px}
+
+/* ============ MODAL (umum, nama, pamit) ============ */
+.modal-wrap{position:fixed; inset:0; background:rgba(22,16,28,.55); display:none;
+  align-items:center; justify-content:center; z-index:80; padding:24px}
+.modal-wrap.tampil{display:flex}
+.modal{background:var(--panel); border:3px solid var(--border); border-radius:24px;
+  padding:24px; max-width:340px; width:100%; box-shadow:0 10px 0 rgba(0,0,0,.18); text-align:center}
+.modal h3{margin:0 0 6px; font-size:20px}
+.modal p{margin:0 0 4px; color:var(--sub); font-weight:700; font-size:14.5px}
+.modal-tombol{display:flex; gap:10px; margin-top:16px}
+.modal-tombol .btn{flex:1}
+.pamit-maskot{width:104px; height:104px; margin:-76px auto 0; position:relative; z-index:2}
+/* modal pilih nama */
+.modal-nama{background:var(--panel); border:3px solid var(--border); border-radius:24px;
+  width:100%; max-width:420px; padding:18px; box-shadow:0 10px 0 rgba(0,0,0,.18);
+  display:flex; flex-direction:column; max-height:82vh}
+.modal-nama h3{margin:0 0 4px; font-size:19px}
+.modal-nama .ket-nama{margin:0 0 10px; color:var(--sub); font-size:12.5px; font-weight:700}
+.modal-nama .daftar-nama{max-height:56vh; overflow-y:auto; display:flex;
+  flex-direction:column; gap:6px}
+.item-nama{text-align:left; padding:11px 14px; border-radius:14px; border:2.5px solid transparent;
+  background:var(--panel2); color:var(--ink); font-weight:700; font-size:15.5px;
+  display:flex; justify-content:space-between; align-items:center; gap:8px}
+.item-nama .cek{width:20px; height:20px; color:var(--aksen); flex-shrink:0; display:none}
+.item-nama.pilih{background:var(--aksen-lembut); border-color:var(--aksen)}
+.item-nama.pilih .cek{display:block}
+.kosong{color:var(--sub); text-align:center; margin:8px 0}
+#cariNama{width:100%; padding:12px 16px; border:3px solid var(--border); border-radius:16px;
+  background:var(--panel2); color:var(--ink); font:inherit; font-size:16px; outline:none;
+  margin-bottom:10px}
+#cariNama:focus{border-color:var(--aksen)}
+#cariNama::placeholder{color:var(--sub)}
+
+/* ============ TOAST, TUTUP, KONFETI ============ */
+#toast{position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--bg); padding:10px 22px; border-radius:999px;
+  font-weight:800; font-size:14px; opacity:0; pointer-events:none; transition:.3s;
+  z-index:70; box-shadow:0 6px 18px rgba(0,0,0,.28); max-width:88%; text-align:center; line-height:1.4}
+#toast.tampil{opacity:1; transform:translateX(-50%)}
+#layarTutup{position:fixed; inset:0; z-index:120; background:var(--bg); display:none;
+  flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  padding:30px; gap:6px}
+#layarTutup.tampil{display:flex}
+.tutup-ikon{width:90px; height:90px; border-radius:50%; background:var(--panel);
+  border:3px solid var(--border); display:flex; align-items:center; justify-content:center;
+  color:var(--sub); box-shadow:0 6px 0 var(--bayang)}
+.tutup-ikon svg{width:44px; height:44px}
+#layarTutup h2{margin:12px 0 0; font-size:26px}
+#layarTutup p{margin:0; color:var(--sub); font-weight:700; font-size:14.5px; max-width:300px; line-height:1.5}
+.tutup-maskot{display:flex; gap:2px; margin-top:14px}
+.tutup-maskot .maskot-w{width:62px; height:62px}
+#konfeti{position:fixed; inset:0; z-index:60; pointer-events:none}
+
+@media (max-width:360px){
+  .chips{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body data-tema="sakura">
+<div id="latar"></div>
+
+<div id="app">
+
+  <!-- ============ BERANDA ============ -->
+  <section id="layarBeranda" class="layar aktif">
+    <div class="identitas">
+      <b>SD NEGERI 01 WANAREJAN · TAMAN</b><br>
+      Guru: Yulis Winarni, S.Pd.
+    </div>
+    <div class="hero">
+      <div class="hero-maskot" id="heroMaskot"></div>
+      <h1><span class="j1">JUARA</span><span class="j2">PENJUMLAHAN</span></h1>
+      <p class="sub">Latihan penjumlahan bersusun · 3 level · 30 soal</p>
+    </div>
+    <div class="panel langkah">
+      <h2><span class="angka-langkah">1</span> Pilih namamu</h2>
+      <button id="btnPilihNama" class="btn-nama">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M4.5 20.5c1.2-3.4 3.9-5.2 7.5-5.2s6.3 1.8 7.5 5.2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span class="nu kosong" id="namaTerpilihTeks">Ketuk untuk memilih nama</span>
+        <svg class="panah" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="panel langkah">
+      <h2><span class="angka-langkah">2</span> Pilih tema</h2>
+      <div id="kartuTema" class="kartu-tema"></div>
+    </div>
+    <button id="btnMulai" class="btn utama besar">MULAI BERMAIN</button>
+    <p class="info-bawah" id="infoBawah"></p>
+  </section>
+
+  <!-- ============ PETA LEVEL ============ -->
+  <section id="layarPeta" class="layar">
+    <div class="peta-top">
+      <button class="ikon-btn" id="btnBeranda" aria-label="Ganti pemain">
+        <svg viewBox="0 0 24 24"><path d="M4.5 11L12 4.5 19.5 11v8.5h-5.5V14h-4v5.5H4.5z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="peta-siwa peta-siwa">
+        <div class="peta-maskot" id="petaMaskot"></div>
+        <div><p class="hi">PEMAIN</p><p class="peta-nama" id="petaNama">—</p></div>
+      </div>
+      <button class="ikon-btn" id="btnKeluarApp" aria-label="Keluar dari aplikasi">
+        <svg viewBox="0 0 24 24"><path d="M14 8.5V6.8c0-1-.8-1.8-1.8-1.8H6.8C5.8 5 5 5.8 5 6.8v10.4c0 1 .8 1.8 1.8 1.8h5.4c1 0 1.8-.8 1.8-1.8v-1.7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M10.5 12h10m0 0l-3-3m3 3l-3 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <h2 class="judul-peta">Pilih Level</h2>
+    <div id="daftarLevel"></div>
+  </section>
+
+  <!-- ============ LAYAR PERMAINAN ============ -->
+  <section id="layarMain" class="layar">
+    <div class="topbar">
+      <button class="ikon-btn" id="btnKeluar" aria-label="Kembali ke peta">
+        <svg viewBox="0 0 24 24"><path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="lvl-badge" id="lvlBadge">Level 1</div>
+      <div class="timer" id="timerBox">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7.5V12l3.2 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span id="timerTeks">15:00</span>
+      </div>
+      <button class="ikon-btn" id="btnSuara" aria-label="Suara"></button>
+    </div>
+    <div class="statusbar">
+      <div class="hati" id="hati"></div>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="area-soal" id="areaSoal">
+      <div class="kertas-wrap" id="kertasWrap">
+        <div class="kertas" id="kertasSoal">
+          <div id="kertasDalam"></div>
+          <div class="maskot-pojok maskot-w" id="maskotMain" data-mood="biasa"></div>
+          <div class="ov-fb" id="ovFb"><div class="ov-ikon" id="ovIkon"></div><p id="ovTeks"></p><p class="ov-sub" id="ovSub"></p></div>
+        </div>
+      </div>
+    </div>
+    <div class="keypad" id="keypad"></div>
+  </section>
+
+  <!-- ============ HASIL ============ -->
+  <section id="layarHasil" class="layar">
+    <div class="panel hasil">
+      <div class="hasil-maskot" id="hasilMaskot"></div>
+      <h2 id="hasilJudul"></h2>
+      <p class="hasil-sub" id="hasilSub"></p>
+      <div class="bintang-row" id="hasilBintang"></div>
+      <div class="nilai-besar"><span id="hasilNilai">0</span><small>/100</small></div>
+      <div class="chips" id="hasilChips"></div>
+      <div class="kirim-bar" id="kirimBar"></div>
+      <div class="tombol-hasil" id="hasilTombol"></div>
+    </div>
+  </section>
+
+  <!-- ============ TAMAT ============ -->
+  <section id="layarTamat" class="layar">
+    <div class="panel hasil">
+      <div class="hasil-maskot" id="tamatMaskot"></div>
+      <h2>Luar Biasa!</h2>
+      <p class="hasil-sub">Kamu berhasil menamatkan semua level! Nilaimu sudah dikirim ke Bu Yulis.</p>
+      <div class="rekap" id="tamatRekap"></div>
+      <div class="kirim-bar" id="kirimBarTamat"></div>
+      <div class="tombol-hasil">
+        <button class="btn utama" id="btnKePeta">Kembali ke Peta Level</button>
+        <button class="btn tautan" id="btnGantiPemain">Ganti Pemain</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- modal pilih nama (dropdown) -->
+<div id="modalNama" class="modal-wrap">
+  <div class="modal-nama">
+    <h3>Pilih Namamu</h3>
+    <p class="ket-nama">Ketuk namamu di daftar. Bisa dicari lewat kotak pencarian.</p>
+    <input id="cariNama" type="search" placeholder="Cari nama…" autocomplete="off">
+    <div id="daftarNama" class="daftar-nama"></div>
+  </div>
+</div>
+
+<!-- modal keluar dari permainan -->
+<div id="modal" class="modal-wrap">
+  <div class="modal">
+    <h3>Keluar dari permainan?</h3>
+    <p>Nilai sementaramu akan dikirim dulu ke Bu Yulis, lalu kamu kembali ke peta level.</p>
+    <div class="modal-tombol">
+      <button class="btn utama" id="mdlBatal">Lanjut Main</button>
+      <button class="btn ghost" id="mdlYa">Keluar</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal pamit (keluar aplikasi) -->
+<div id="modalPamit" class="modal-wrap">
+  <div class="modal">
+    <div class="pamit-maskot" id="pamitMaskot"></div>
+    <h3>Sampai Jumpa!</h3>
+    <p>Terima kasih sudah bermain. Halaman ini sekarang boleh ditutup.</p>
+    <div class="modal-tombol">
+      <button class="btn ghost" id="pamitBatal">Kembali Bermain</button>
+    </div>
+  </div>
+</div>
+
+<!-- layar game ditutup -->
+<div id="layarTutup">
+  <div class="tutup-ikon">
+    <svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.3"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor"/></svg>
+  </div>
+  <h2>Permainan Ditutup</h2>
+  <p id="tutupTeks"></p>
+  <div class="tutup-maskot" id="tutupMaskot"></div>
+</div>
+
+<div id="toast"></div>
+<canvas id="konfeti"></canvas>
+
+<script>
+(function(){
+'use strict';
+
+/* =============================================================
+   KONFIGURASI — yang sering perlu diubah ada di sini
+   ============================================================= */
+const KONFIG = {
+  // Alamat Web App Apps Script (tempat nilai dikirim):
+  urlApps: 'https://script.google.com/macros/s/AKfycbzFarJrXHW2ZJ4qt80eLqG_aLrYmjljWD-QLSTJirsKY39gw7wmK9jaaOWOLA_WydsfiQ/exec',
+  sheet: 'Sheet1',          // 1 permainan = 1 sheet (game ini = Sheet1)
+  game: 'Penjumlahan',
+  // Game & pengiriman nilai aktif SAMPAI DENGAN "batasTampil"
+  // (mulai tanggal "tutupMulai" game otomatis ditutup).
+  tutupMulai: '2026-09-21', // format TAHUN-BULAN-TANGGAL
+  batasTampil: '20 September 2026'
+};
+
+const LEVELS = [
+  {no:1, judul:'Tanpa Menyimpan',  ket:'puluhan & ratusan',  waktu:900},
+  {no:2, judul:'Dengan Menyimpan', ket:'bilangan puluhan',   waktu:1200},
+  {no:3, judul:'Dengan Menyimpan', ket:'bilangan ratusan',   waktu:1200}
+];
+const ROMAWI = ['I','II','III'];
+const TEMAS = [
+  {id:'sakura', nama:'Sakura'},
+  {id:'robot',  nama:'Robo'},
+  {id:'alien',  nama:'Alfa'}
+];
+const SISWA = [
+"ADELIA SYAFA'ATUL MAULIDA","ADIVA NUR MEISYA","ADYATMA FADLAN ROMADLONA",
+"ADZKA RAFFASYA ZAIDAN","AHMAD FAISHAL RIZIQ","AHMAD RAYYAN MELDI",
+"AISYAH KAYLA RAMADHANI","ANNADA SHANUM FATIMAH","AQILLA FARIZA MUFIA",
+"ARKNA PUTRA PRASETIYO","ARRAFI HAZIQ SHAKEEL BUANA","ASSYIFA ZAHRA",
+"ATHAYA TSAQIB ALGHAZALI","AYRA WAHYU AL MAGHVIRA YUWONO","AZZAM KHALIF SETIAWAN",
+"AZZAN PUTRA PERATAMA","CLARISSA AZZAHRA NURHIDAYANTI","DINDA ARUM",
+"FAHRI SULTAN AJI","FAKHRI FATHUR RAYHAN","GILANG RAMADHANI",
+"HAIDAR ABQARY HARTON ARGATSANI","IBRAHIM DUAJAH","KAYS SYAMILAH",
+"KINANTI NURIL MAULIDA","LAUT ARSENIO DIEWANTO","MAHESA GILANG RAMADHAN",
+"MIKHAYLA ELSHANUM UTOMO","MUHAMAD SYAUQI MISHBAUL IHSAN","Muhammad Al Ayubi",
+"MUHAMMAD IRFAN MUSYAFFA","MUHAMMAD IVANDER ADLEY","Muhammad Muflihul 'Alim",
+"NAYLA MAISYA KHUMAIROH","NOVAN ARDIANSYAH","RANIA SHEZA AZZAHRA",
+"SHEENA AZALIA WIBOWO","ZAHRA ALFATHUNNISA","ZAYDAN RAFAN ALFAREZ","T A M U"
+];
+const PUJI = ['Hebat!','Keren!','Pintar!','Betul sekali!','Mantap!'];
+const SEMANGAT = ['Semangat, ya!','Ayo perhatikan lagi!','Ayo lebih teliti!','Belum tepat, lanjut ya!'];
+const STATUS = {selesai:'Selesai', sempurna:'Belum Sempurna',
+  nyawa:'Nyawa Habis', waktu:'Waktu Habis', keluar:'Keluar di Tengah'};
+
+/* ============ UTIL ============ */
+const $  = id => document.getElementById(id);
+const $$ = s  => [...document.querySelectorAll(s)];
+const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const acakDari = arr => arr[Math.floor(Math.random()*arr.length)];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function simpan(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function muat(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function fmtWaktu(d){const m=Math.floor(d/60),s=d%60;return m+':'+String(s).padStart(2,'0');}
+function getar(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}}
+function sudahTutup(){return Date.now() >= new Date(KONFIG.tutupMulai+'T00:00:00').getTime();}
+
+/* ============ IKON SVG ============ */
+const IKON = {
+  hati:`<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.3l-1.4-1.3C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.6 11.5L12 21.3z"/></svg>`,
+  bintang:`<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>`,
+  jam:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7.5V12l3.2 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`,
+  gembok:`<svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2.3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.3"/><circle cx="12" cy="15.5" r="1.6" fill="currentColor"/></svg>`,
+  cek:`<svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  centang:`<svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  silang:`<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>`,
+  hapus:`<svg viewBox="0 0 24 24"><path d="M9 5.5h10c1 0 1.8.8 1.8 1.8v9.4c0 1-.8 1.8-1.8 1.8H9l-5.5-6.5L9 5.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M11.5 9.8l4.6 4.6m0-4.6l-4.6 4.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+  suaraOn:`<svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z" fill="currentColor"/><path d="M16 8.6a5.2 5.2 0 0 1 0 6.8M18.5 6.5a8.4 8.4 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+  suaraOff:`<svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z" fill="currentColor"/><path d="M16.5 9l5 6m0-6l-5 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`
+};
+
+/* ============ AUDIO (Web Audio API) ============ */
+let audioCtx = null, suaraAktif = muat('jujumlah_suara', true);
+function pastikanAudio(){
+  if(!audioCtx){const AC=window.AudioContext||window.webkitAudioContext; if(AC) audioCtx=new AC();}
+  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+}
+function nada(freq, mulai, durasi, tipe, vol, slideKe){
+  if(!suaraAktif) return;
+  pastikanAudio();
+  if(!audioCtx) return;
+  const t = audioCtx.currentTime + mulai;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = tipe || 'sine';
+  o.frequency.setValueAtTime(freq, t);
+  if(slideKe) o.frequency.exponentialRampToValueAtTime(slideKe, t+durasi);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol||0.15, t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+durasi);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t); o.stop(t+durasi+0.05);
+}
+const sfx = {
+  klik(){nada(700,0,.05,'triangle',.10);},
+  benar(){[523.25,659.25,783.99,1046.5].forEach((f,i)=>nada(f,i*.085,.16,'triangle',.16));},
+  salah(){nada(220,0,.18,'sawtooth',.10,150); nada(160,.16,.3,'sawtooth',.09,105);},
+  gagal(){nada(392,0,.18,'triangle',.15,330); nada(311,.18,.22,'triangle',.15,262); nada(262,.4,.5,'triangle',.15,175);},
+  menang(){[392,523.25,659.25,783.99,1046.5,1318.5].forEach((f,i)=>nada(f,i*.09,.2,'triangle',.16)); nada(1568,.6,.5,'sine',.12);},
+  penuh(){nada(200,0,.07,'square',.06);},
+  ingat(){nada(988,0,.12,'sine',.12); nada(988,.18,.12,'sine',.12);}
+};
+
+/* ============ MASKOT (SVG) ============ */
+function maskotSakura(){
+  return `<svg class="maskot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="44" cy="27" rx="11" ry="21" fill="#FAD3E1" stroke="#53303F" stroke-width="3.5"/>
+    <ellipse cx="44" cy="30" rx="5" ry="11" fill="#F2A5C0"/>
+    <ellipse cx="76" cy="27" rx="11" ry="21" fill="#FAD3E1" stroke="#53303F" stroke-width="3.5"/>
+    <ellipse cx="76" cy="30" rx="5" ry="11" fill="#F2A5C0"/>
+    <circle cx="60" cy="72" r="34" fill="#FFFFFF" stroke="#53303F" stroke-width="3.5"/>
+    <ellipse cx="42" cy="79" rx="6.5" ry="5" fill="#F9B8C8"/>
+    <ellipse cx="78" cy="79" rx="6.5" ry="5" fill="#F9B8C8"/>
+    <ellipse cx="60" cy="74" rx="4" ry="3.2" fill="#E4567E"/>
+    <g class="f-biasa">
+      <circle cx="47" cy="65" r="4.6" fill="#40242E"/><circle cx="73" cy="65" r="4.6" fill="#40242E"/>
+      <path d="M54 81 Q60 86 66 81" fill="none" stroke="#53303F" stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+    <g class="f-senang">
+      <path d="M41 66 Q47 58 53 66" fill="none" stroke="#53303F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M67 66 Q73 58 79 66" fill="none" stroke="#53303F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M50 79 Q60 90 70 79 Q60 84 50 79" fill="#C2406B" stroke="#53303F" stroke-width="3"/>
+    </g>
+    <g class="f-sedih">
+      <path d="M41 67 Q47 73 53 67" fill="none" stroke="#53303F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M67 67 Q73 73 79 67" fill="none" stroke="#53303F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M54 86 Q60 80 66 86" fill="none" stroke="#53303F" stroke-width="3.2" stroke-linecap="round"/>
+      <ellipse cx="47" cy="76" rx="3" ry="4.5" fill="#8FC7EA"/>
+    </g></svg>`;
+}
+function maskotRobot(){
+  return `<svg class="maskot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <line x1="60" y1="11" x2="60" y2="25" stroke="#1D3A5F" stroke-width="3.5"/>
+    <circle cx="60" cy="10" r="6" fill="#FFC93C" stroke="#1D3A5F" stroke-width="3"/>
+    <rect x="15" y="40" width="12" height="27" rx="5" fill="#FFC93C" stroke="#1D3A5F" stroke-width="3"/>
+    <rect x="93" y="40" width="12" height="27" rx="5" fill="#FFC93C" stroke="#1D3A5F" stroke-width="3"/>
+    <rect x="26" y="25" width="68" height="60" rx="17" fill="#9CC9F0" stroke="#1D3A5F" stroke-width="3.5"/>
+    <rect x="37" y="37" width="46" height="34" rx="10" fill="#1D3A5F"/>
+    <g class="f-biasa">
+      <circle cx="51" cy="50" r="5" fill="#FFD166"/><circle cx="69" cy="50" r="5" fill="#FFD166"/>
+      <path d="M54 62h12" fill="none" stroke="#FFD166" stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+    <g class="f-senang">
+      <path d="M45 51 Q51 43 57 51" fill="none" stroke="#FFD166" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M63 51 Q69 43 75 51" fill="none" stroke="#FFD166" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M53 60 Q60 67 67 60" fill="none" stroke="#FFD166" stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+    <g class="f-sedih">
+      <path d="M45 49 Q51 55 57 49" fill="none" stroke="#FFD166" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M63 49 Q69 55 75 49" fill="none" stroke="#FFD166" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M54 64 Q60 59 66 64" fill="none" stroke="#FFD166" stroke-width="3.2" stroke-linecap="round"/>
+    </g></svg>`;
+}
+function maskotAlien(){
+  return `<svg class="maskot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <path d="M97 30l2.4 6 6 2.4-6 2.4-2.4 6-2.4-6-6-2.4 6-2.4z" fill="#FFD166"/>
+    <path d="M20 88l1.8 4.5 4.5 1.8-4.5 1.8-1.8 4.5-1.8-4.5-4.5-1.8 4.5-1.8z" fill="#4CC9F0"/>
+    <line x1="60" y1="13" x2="60" y2="27" stroke="#0E2A3F" stroke-width="3.5"/>
+    <circle cx="60" cy="11" r="5.5" fill="#4CC9F0" stroke="#0E2A3F" stroke-width="3"/>
+    <ellipse cx="60" cy="70" rx="37" ry="35" fill="#79E0B0" stroke="#0E2A3F" stroke-width="3.5"/>
+    <ellipse cx="44" cy="86" rx="6" ry="4.5" fill="#FBB1C8"/>
+    <ellipse cx="76" cy="86" rx="6" ry="4.5" fill="#FBB1C8"/>
+    <g class="f-biasa">
+      <ellipse cx="48" cy="62" rx="9.5" ry="12" fill="#FFFFFF" stroke="#0E2A3F" stroke-width="2.6"/>
+      <circle cx="49" cy="64" r="4.6" fill="#173B57"/>
+      <ellipse cx="72" cy="62" rx="9.5" ry="12" fill="#FFFFFF" stroke="#0E2A3F" stroke-width="2.6"/>
+      <circle cx="71" cy="64" r="4.6" fill="#173B57"/>
+      <path d="M53 80 Q60 85 67 80" fill="none" stroke="#0E2A3F" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <g class="f-senang">
+      <path d="M40 61 Q48 51 56 61" fill="none" stroke="#0E2A3F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M64 61 Q72 51 80 61" fill="none" stroke="#0E2A3F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M50 77 Q60 89 70 77 Q60 82 50 77" fill="#0E2A3F"/>
+    </g>
+    <g class="f-sedih">
+      <path d="M40 63 Q48 70 56 63" fill="none" stroke="#0E2A3F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M64 63 Q72 70 80 63" fill="none" stroke="#0E2A3F" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M53 84 Q60 78 67 84" fill="none" stroke="#0E2A3F" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="48" cy="74" rx="3" ry="4.5" fill="#4CC9F0"/>
+    </g></svg>`;
+}
+function maskot(id){
+  const svg = id==='sakura'?maskotSakura() : id==='robot'?maskotRobot() : maskotAlien();
+  return `<div class="maskot-w" data-mood="biasa">${svg}</div>`;
+}
+let moodTimer = null;
+function setMood(wrap, mood, autoReset){
+  if(!wrap) return;
+  wrap.dataset.mood = mood;
+  clearTimeout(moodTimer);
+  if(autoReset !== false) moodTimer = setTimeout(()=>{wrap.dataset.mood='biasa';}, 1000);
+}
+
+/* ============ GENERATOR SOAL ============ */
+/* Level 1: tanpa menyimpan — tiap kolom jumlah digitnya <= 9 */
+function buatTanpaSimpan(d){
+  let a=0, b=0;
+  for(let k=0;k<d;k++){
+    let t, x;
+    if(k===d-1){ t=rnd(2,9); x=rnd(1,t-1); }
+    else       { t=rnd(0,9); x=rnd(0,t); }
+    a += x*Math.pow(10,k);
+    b += (t-x)*Math.pow(10,k);
+  }
+  return [a,b];
+}
+/* Level 2: puluhan, WAJIB menyimpan dari satuan, hasil tetap puluhan (<100) */
+function buatPuluhanSimpan(){
+  const tS = rnd(10,18);
+  const aS = rnd(Math.max(0,tS-9), 9);
+  const bS = tS - aS;
+  const tP = rnd(2,8);
+  const aP = rnd(1,tP-1);
+  const bP = tP - aP;
+  return [aP*10+aS, bP*10+bS];
+}
+/* Level 3: ratusan, WAJIB menyimpan dari satuan (kadang puluhan ikut menyimpan) */
+function buatRatusanSimpan(){
+  const tS = rnd(10,18);
+  const aS = rnd(Math.max(0,tS-9), 9);
+  const bS = tS - aS;
+  const simpanPuluhan = Math.random() < 0.45;
+  let aP, bP;
+  if(simpanPuluhan){
+    const s = rnd(9,17); aP = rnd(Math.max(0,s-9), Math.min(9,s)); bP = s - aP;
+  }else{
+    const s = rnd(0,8);  aP = rnd(Math.max(0,s-9), Math.min(9,s)); bP = s - aP;
+  }
+  const carry2 = simpanPuluhan ? 1 : 0;
+  const tR = rnd(2, 9 - carry2);
+  const aR = rnd(1, tR-1);
+  const bR = tR - aR;
+  return [aR*100 + aP*10 + aS, bR*100 + bP*10 + bS];
+}
+function buatSoal(idx){
+  const target = idx===0 ? shuffle([2,2,2,2,2,3,3,3,3,3]) : null;
+  const hasil = [], seen = new Set();
+  let iter = 0;
+  while(hasil.length < 10 && iter++ < 600){
+    let s;
+    if(idx===0)      s = buatTanpaSimpan(target[hasil.length]);
+    else if(idx===1) s = buatPuluhanSimpan();
+    else             s = buatRatusanSimpan();
+    const k = s[0]+'+'+s[1];
+    if(!seen.has(k)){ seen.add(k); hasil.push(s); }
+  }
+  return hasil;
+}
+
+/* ============ STATE ============ */
+const state = {
+  nama:null, tema:'sakura', level:0,
+  soal:[], idx:0, benar:0, salah:0, nyawa:3, sisa:0,
+  jawab:'', nDigit:2, mulaiTs:0, timerId:null, blok:false,
+  hasilSoal:[]   /* true = benar, false = salah, per nomor soal */
+};
+let layarAktif = 'layarBeranda';
+let progres = muat('jujumlah_progres', {});
+let payloadTerakhir = null;
+function progSiswa(){
+  if(!progres[state.nama]) progres[state.nama] = {buka:1, bintang:{}};
+  return progres[state.nama];
+}
+function simpanProgres(){ simpan('jujumlah_progres', progres); }
+
+/* ============ ELEMEN ============ */
+const el = {
+  hero:$('heroMaskot'), kartuTema:$('kartuTema'),
+  btnPilihNama:$('btnPilihNama'), namaTerpilihTeks:$('namaTerpilihTeks'),
+  cari:$('cariNama'), daftar:$('daftarNama'), modalNama:$('modalNama'),
+  btnMulai:$('btnMulai'), infoBawah:$('infoBawah'),
+  petaMaskot:$('petaMaskot'), petaNama:$('petaNama'), daftarLevel:$('daftarLevel'),
+  btnKeluarApp:$('btnKeluarApp'), modalPamit:$('modalPamit'), pamitMaskot:$('pamitMaskot'),
+  pamitBatal:$('pamitBatal'),
+  lvlBadge:$('lvlBadge'), timerBox:$('timerBox'), timerTeks:$('timerTeks'),
+  btnSuara:$('btnSuara'), btnKeluar:$('btnKeluar'), hati:$('hati'), dots:$('dots'),
+  areaSoal:$('areaSoal'), kertasWrap:$('kertasWrap'), kertas:$('kertasSoal'),
+  kertasDalam:$('kertasDalam'), maskotMain:$('maskotMain'),
+  ovFb:$('ovFb'), ovIkon:$('ovIkon'), ovTeks:$('ovTeks'), ovSub:$('ovSub'),
+  keypad:$('keypad'),
+  hasilMaskot:$('hasilMaskot'), hasilJudul:$('hasilJudul'), hasilSub:$('hasilSub'),
+  hasilBintang:$('hasilBintang'), hasilNilai:$('hasilNilai'), hasilChips:$('hasilChips'),
+  kirimBar:$('kirimBar'), hasilTombol:$('hasilTombol'),
+  tamatMaskot:$('tamatMaskot'), tamatRekap:$('tamatRekap'), kirimBarTamat:$('kirimBarTamat'),
+  btnKePeta:$('btnKePeta'), btnGantiPemain:$('btnGantiPemain'),
+  modal:$('modal'), mdlBatal:$('mdlBatal'), mdlYa:$('mdlYa'),
+  tutup:$('layarTutup'), tutupTeks:$('tutupTeks'), tutupMaskot:$('tutupMaskot'),
+  toast:$('toast'), kanvas:$('konfeti'), btnBeranda:$('btnBeranda')
+};
+
+/* ============ NAVIGASI LAYAR ============ */
+function tampil(id){
+  $$('.layar').forEach(s=>s.classList.remove('aktif'));
+  $(id).classList.add('aktif');
+  layarAktif = id;
+}
+
+/* ============ BERANDA & PILIH NAMA ============ */
+function renderDaftarNama(f){
+  const q = (f||'').trim().toLowerCase();
+  const list = SISWA.filter(n=>n.toLowerCase().includes(q));
+  el.daftar.innerHTML = list.length
+    ? list.map(n=>`<button class="item-nama${n===state.nama?' pilih':''}" data-nama="${n}"><span>${n}</span><span class="cek">${IKON.cek}</span></button>`).join('')
+    : '<p class="kosong">Nama tidak ditemukan.</p>';
+}
+function renderTombolNama(){
+  if(state.nama){
+    el.namaTerpilihTeks.textContent = state.nama;
+    el.namaTerpilihTeks.classList.remove('kosong');
+    el.btnPilihNama.classList.add('pilih');
+  }else{
+    el.namaTerpilihTeks.textContent = 'Ketuk untuk memilih nama';
+    el.namaTerpilihTeks.classList.add('kosong');
+    el.btnPilihNama.classList.remove('pilih');
+  }
+}
+function bukaModalNama(){
+  el.cari.value = '';
+  renderDaftarNama('');
+  el.modalNama.classList.add('tampil');
+}
+function tutupModalNama(){ el.modalNama.classList.remove('tampil'); }
+function renderKartuTema(){
+  el.kartuTema.innerHTML = TEMAS.map(t=>`
+    <div class="kt${state.tema===t.id?' pilih':''}" data-tema="${t.id}">
+      <span class="kt-cek">${IKON.cek}</span>
+      <div class="kt-maskot">${maskot(t.id)}</div>
+      <p>${t.nama}</p>
+    </div>`).join('');
+}
+function renderHero(){
+  el.hero.innerHTML = TEMAS.map(t=>`<div class="hero-m">${maskot(t.id)}</div>`).join('');
+}
+function renderSuara(){
+  el.btnSuara.innerHTML = suaraAktif ? IKON.suaraOn : IKON.suaraOff;
+}
+
+/* ============ FULLSCREEN (HP Android) ============ */
+function fullscreen(){
+  const d = document.documentElement;
+  try{
+    const f = d.requestFullscreen || d.webkitRequestFullscreen || d.msRequestFullscreen;
+    if(f){ const p = f.call(d); if(p && p.catch) p.catch(()=>{}); }
+  }catch(e){}
+  try{
+    if(screen.orientation && screen.orientation.lock)
+      screen.orientation.lock('portrait').catch(()=>{});
+  }catch(e){}
+}
+async function keluarFullscreen(){
+  try{
+    const f = document.exitFullscreen || document.webkitExitFullscreen;
+    if(f) await f.call(document);
+  }catch(e){}
+}
+async function mintaWakeLock(){
+  try{ if(navigator.wakeLock) await navigator.wakeLock.request('screen'); }catch(e){}
+}
+
+/* ============ PETA LEVEL ============ */
+function renderMaskotSemua(){
+  el.petaMaskot.innerHTML = maskot(state.tema);
+  el.maskotMain.innerHTML = maskot(state.tema).replace('<div class="maskot-w" data-mood="biasa">','')
+      .replace(/<\/div>$/,'</svg>');
+  el.maskotMain.dataset.mood = 'biasa';
+}
+function renderPeta(){
+  const p = progSiswa();
+  el.petaNama.textContent = state.nama;
+  renderMaskotSemua();
+  el.daftarLevel.innerHTML = LEVELS.map((L,i)=>{
+    const kunci = L.no > p.buka;
+    const b = p.bintang[L.no]||0;
+    return `
+    <div class="kartu-level${kunci?' terkunci':''}">
+      <div class="lvl-no">${ROMAWI[i]}</div>
+      <div class="lvl-info">
+        <h3>Level ${L.no}</h3>
+        <p class="lvl-ket">${L.judul} — ${L.ket}</p>
+        <p class="lvl-meta">${IKON.jam} ${L.waktu/60} menit &middot; 10 soal</p>
+        ${b>0?`<div class="lvl-bintang">${[0,1,2].map(x=>`<span class="${x<b?'on':''}">${IKON.bintang}</span>`).join('')}</div>`:''}
+      </div>
+      ${kunci
+        ? `<div class="lvl-kunci">${IKON.gembok}<small>Terkunci</small></div>`
+        : `<button class="btn utama kecil" data-lvl="${i}">MAIN</button>`}
+    </div>`;
+  }).join('');
+}
+
+/* ============ PERMAINAN ============ */
+function mulaiLevel(i){
+  sfx.klik();
+  state.level = i;
+  const L = LEVELS[i];
+  el.lvlBadge.textContent = 'Level ' + L.no;
+  renderMaskotSemua();
+  resetAttempt();
+  tampil('layarMain');
+  fullscreen();
+  mintaWakeLock();
+  mintaPasKertas();
+}
+function resetAttempt(){
+  state.soal = buatSoal(state.level);
+  state.idx = 0; state.benar = 0; state.salah = 0; state.nyawa = 3;
+  state.jawab = ''; state.blok = false; state.hasilSoal = [];
+  state.sisa = LEVELS[state.level].waktu;
+  state.mulaiTs = Date.now();
+  el.ovFb.className = 'ov-fb';
+  renderHati(); renderTimer(); renderDots();
+  tampilSoal();
+  if(state.timerId) clearInterval(state.timerId);
+  state.timerId = setInterval(tik, 1000);
+}
+function tampilSoal(){
+  const [a,b] = state.soal[state.idx];
+  const n = String(a).length;
+  state.nDigit = n;
+  const ca = String(a).split(''), cb = String(b).split('');
+  let html = `<div class="kertas-tag">Soal ${state.idx+1} / 10</div>
+    <div class="susun">
+    <div class="s-baris"><span class="s-sp"></span>${ca.map(c=>`<div class="dg">${c}</div>`).join('')}</div>
+    <div class="s-baris"><span class="plus">+</span>${cb.map(c=>`<div class="dg">${c}</div>`).join('')}</div>
+    <div class="s-garis"></div>
+    <div class="s-baris"><span class="s-sp"></span>${Array.from({length:n},(_,k)=>`<div class="dg ja" data-k="${k}"></div>`).join('')}</div>
+    </div>`;
+  el.kertasDalam.innerHTML = html;
+  el.ovFb.className = 'ov-fb';
+  renderJawab();
+}
+/* Tampilan jawaban PERSIS sesuai urutan tombol yang ditekan (dari kiri,
+   seperti kalkulator). Yang dilihat anak = yang dinilai sistem. */
+function renderJawab(){
+  const cells = $$('#kertasSoal .ja');
+  const d = state.jawab.split('');
+  cells.forEach(c=>{ c.textContent=''; c.classList.remove('aktif'); });
+  d.forEach((ch,j)=>{ if(cells[j]) cells[j].textContent = ch; });
+  if(d.length < cells.length && cells[d.length]) cells[d.length].classList.add('aktif');
+}
+/* Menyesuaikan ukuran kartu soal dengan ruang tersisa, supaya kartu
+   TIDAK PERNAH menutupi keypad (tombol OK/hapus selalu bisa ditekan). */
+function pasKertas(){
+  if(layarAktif !== 'layarMain') return;
+  el.kertas.style.transform = '';
+  el.kertasWrap.style.height = '';
+  const areaH = el.areaSoal.clientHeight;
+  const h = el.kertasWrap.offsetHeight;
+  if(areaH > 60 && h > areaH - 12){
+    const s = Math.max(.5, (areaH - 16) / h);
+    el.kertasWrap.style.height = Math.round(h * s) + 'px';
+    el.kertas.style.transform = 'scale(' + s.toFixed(3) + ')';
+  }
+}
+let pasRaf = null;
+function mintaPasKertas(){
+  if(pasRaf) return;
+  pasRaf = requestAnimationFrame(()=>{ pasRaf = null; pasKertas(); });
+}
+function renderHati(){
+  $$('#hati .h').forEach((s,i)=> s.classList.toggle('hilang', i >= state.nyawa));
+}
+function bangunHati(){
+  el.hati.innerHTML = [0,1,2].map(()=>`<span class="h">${IKON.hati}</span>`).join('');
+}
+/* Titik progres: hijau = benar, merah = salah */
+function renderDots(){
+  let html = '';
+  for(let i=0;i<10;i++){
+    let cls = 'd';
+    if(i < state.hasilSoal.length) cls += state.hasilSoal[i] ? ' isi' : ' slh';
+    else if(i === state.idx) cls += ' skrng';
+    html += `<span class="${cls}"></span>`;
+  }
+  el.dots.innerHTML = html;
+}
+function renderTimer(){
+  const m = Math.floor(state.sisa/60), s = Math.max(0,state.sisa%60);
+  el.timerTeks.textContent = m+':'+String(s).padStart(2,'0');
+  el.timerBox.classList.toggle('mendesak', state.sisa<=60 && state.sisa>0);
+}
+function tekan(d){
+  if(state.blok || layarAktif!=='layarMain' || !state.soal.length) return;
+  if(d==='ok'){ kirimJawab(); return; }
+  if(d==='del'){
+    if(state.jawab){ state.jawab = state.jawab.slice(0,-1); renderJawab(); sfx.klik(); }
+    return;
+  }
+  if(state.jawab.length >= state.nDigit){ sfx.penuh(); return; }
+  state.jawab += d; renderJawab(); sfx.klik();
+}
+function kirimJawab(){
+  if(!state.jawab){
+    el.kertasWrap.classList.add('goyang');
+    setTimeout(()=>el.kertasWrap.classList.remove('goyang'),500);
+    sfx.penuh(); return;
+  }
+  const [a,b] = state.soal[state.idx];
+  if(parseInt(state.jawab,10) === a+b){
+    /* === BENAR: lanjut ke soal berikutnya === */
+    state.blok = true;
+    state.benar++;
+    state.hasilSoal.push(true);
+    renderDots();
+    sfx.benar(); getar(30);
+    setMood(el.maskotMain,'senang');
+    tampilFb(true, a+b);
+    setTimeout(()=>{ state.blok=false; lanjutSoal(); }, 900);
+  }else{
+    /* === SALAH: nyawa berkurang, jawaban benar ditampilkan,
+       lalu TETAP LANJUT ke soal berikutnya === */
+    state.blok = true;
+    state.salah++;
+    state.nyawa--;
+    state.hasilSoal.push(false);
+    renderDots(); renderHati();
+    sfx.salah(); getar([70,50,70]);
+    setMood(el.maskotMain,'sedih');
+    tampilFb(false, a+b);
+    el.kertasWrap.classList.add('goyang');
+    setTimeout(()=>el.kertasWrap.classList.remove('goyang'),500);
+    setTimeout(()=>{
+      state.blok = false;
+      el.ovFb.className = 'ov-fb';
+      if(state.nyawa<=0){ akhir('nyawa'); }
+      else { lanjutSoal(); }
+    }, 1300);
+  }
+}
+function lanjutSoal(){
+  state.idx++;
+  state.jawab = '';
+  if(state.idx >= state.soal.length){ akhir('selesai'); }
+  else { renderDots(); tampilSoal(); mintaPasKertas(); }
+}
+function tampilFb(benar, jawabBenar){
+  el.ovFb.className = 'ov-fb ' + (benar?'benar':'salah');
+  el.ovIkon.innerHTML = benar ? IKON.centang : IKON.silang;
+  if(benar){
+    el.ovTeks.textContent = acakDari(PUJI);
+    el.ovSub.textContent = '';
+  }else{
+    el.ovTeks.textContent = 'Jawabannya ' + jawabBenar;
+    el.ovSub.textContent = acakDari(SEMANGAT);
+  }
+}
+function tik(){
+  if(sudahTutup()){ tutupGame(); return; }
+  state.sisa--;
+  renderTimer();
+  if(state.sisa===60) sfx.ingat();
+  if(state.sisa<=0){ akhir('waktu'); }
+}
+function jedaTimer(){ if(state.timerId){ clearInterval(state.timerId); state.timerId=null; } }
+function lanjutTimer(){
+  if(!state.timerId && layarAktif==='layarMain' && state.sisa>0)
+    state.timerId = setInterval(tik,1000);
+}
+
+/* ============ AKHIR PERCOBAAN ============ */
+function akhir(hasil){
+  jedaTimer();
+  el.ovFb.className = 'ov-fb';
+  const L = LEVELS[state.level];
+  const durasi = Math.min(L.waktu, Math.round((Date.now()-state.mulaiTs)/1000));
+  const sempurna = (hasil==='selesai' && state.benar===10);
+  const statusTxt = (hasil==='selesai' && !sempurna) ? STATUS.sempurna : STATUS[hasil];
+  const data = {
+    sheet: KONFIG.sheet, game: KONFIG.game, nama: state.nama, level: L.no,
+    nilai: state.benar*10,
+    benar: state.benar, salah: state.salah,
+    nyawa: hasil==='nyawa' ? 0 : state.nyawa,
+    durasi: durasi, status: statusTxt
+  };
+  if(hasil==='keluar'){
+    kirimNilai(data, null);
+    renderPeta(); tampil('layarPeta');
+    return;
+  }
+  if(sempurna){
+    const p = progSiswa();
+    p.bintang[L.no] = Math.max(p.bintang[L.no]||0, state.nyawa);
+    p.buka = Math.max(p.buka, Math.min(3, L.no+1));
+    simpanProgres();
+    sfx.menang(); getar([40,60,40]);
+    if(L.no===3){
+      tampilTamat();
+      kirimNilai(data, el.kirimBarTamat);
+      konfeti(140,3.4); setTimeout(()=>konfeti(100,2.6),900); setTimeout(()=>konfeti(80,2.2),1800);
+    }else{
+      tampilHasil({sukses:true, level:L.no, nilai:100, benar:10,
+        salah:state.salah, nyawa:state.nyawa, durasi,
+        bintang:state.nyawa, status:'Selesai'});
+      kirimNilai(data, el.kirimBar);
+      konfeti(60,2.2);
+    }
+  }else{
+    sfx.gagal(); getar([120,80,120]);
+    tampilHasil({sukses:false, level:L.no, nilai:state.benar*10, benar:state.benar,
+      salah:state.salah, nyawa:data.nyawa, durasi, bintang:0, status:statusTxt});
+    kirimNilai(data, el.kirimBar);
+  }
+}
+function tampilHasil(o){
+  el.hasilMaskot.innerHTML = maskot(state.tema);
+  const w = el.hasilMaskot.querySelector('.maskot-w');
+  if(w) w.dataset.mood = o.sukses ? 'senang' : 'sedih';
+  el.hasilJudul.textContent = o.sukses
+    ? 'Level '+o.level+' Selesai!'
+    : (o.status==='Waktu Habis' ? 'Waktu Habis…'
+      : o.status===STATUS.sempurna ? 'Belum Semua Benar…'
+      : 'Nyawa Habis…');
+  el.hasilSub.textContent = o.sukses
+    ? 'Kerja bagus! Nilaimu sudah dikirim ke Bu Yulis.'
+    : (o.status===STATUS.sempurna
+      ? 'Kamu benar '+o.benar+' dari 10 soal. Ulangi levelnya supaya dapat nilai 100 ya!'
+      : (o.status==='Waktu Habis'
+        ? 'Ayo coba lagi lebih cepat. Kamu pasti bisa!'
+        : 'Ayo coba lagi dari awal. Kamu pasti bisa!'));
+  el.hasilBintang.innerHTML = [0,1,2].map(i=>
+    `<span class="bs${i<o.bintang?' on':''}" style="animation-delay:${.15+i*.15}s">${IKON.bintang}</span>`).join('');
+  el.hasilNilai.textContent = o.nilai;
+  el.hasilChips.innerHTML = `
+    <div class="chip">BENAR<b>${o.benar}</b></div>
+    <div class="chip">SALAH<b>${o.salah}</b></div>
+    <div class="chip">SISA NYAWA<b>${o.nyawa}</b></div>
+    <div class="chip">WAKTU<b>${fmtWaktu(o.durasi)}</b></div>`;
+  let tombol = '';
+  if(o.sukses && o.level<3)
+    tombol += `<button class="btn utama" data-aksi="lanjut">LANJUT KE LEVEL ${o.level+1}</button>`;
+  if(o.sukses)
+    tombol += `<button class="btn ghost" data-aksi="ulang">Ulangi Level ${o.level}</button>`;
+  else
+    tombol += `<button class="btn utama" data-aksi="ulang">COBA LAGI</button>`;
+  tombol += `<button class="btn tautan" data-aksi="peta">Kembali ke Peta Level</button>`;
+  el.hasilTombol.innerHTML = tombol;
+  setKirim(el.kirimBar, 'mengirim');
+  tampil('layarHasil');
+}
+function tampilTamat(){
+  const p = progSiswa();
+  el.tamatMaskot.innerHTML = maskot(state.tema);
+  const w = el.tamatMaskot.querySelector('.maskot-w');
+  if(w) w.dataset.mood = 'senang';
+  el.tamatRekap.innerHTML = LEVELS.map((L,i)=>{
+    const b = p.bintang[L.no]||0;
+    return `<div class="rk"><span>Level ${ROMAWI[i]}</span>
+      <div>${[0,1,2].map(x=>`<span class="bs${x<b?' on':''}">${IKON.bintang}</span>`).join('')}</div></div>`;
+  }).join('');
+  setKirim(el.kirimBarTamat, 'mengirim');
+  tampil('layarTamat');
+}
+
+/* ============ KIRIM NILAI KE GOOGLE SHEET ============ */
+function setKirim(bar, status, pesan){
+  if(!bar) return;
+  bar.className = 'kirim-bar ' + status;
+  if(status==='mengirim')
+    bar.innerHTML = '<span class="kb-dot"></span><span>Mengirim nilai ke Bu Yulis…</span>';
+  else if(status==='ok')
+    bar.innerHTML = `<span class="kb-oke">${IKON.cek}</span><span>Nilai terkirim ke Bu Yulis</span>`;
+  else if(status==='ditutup')
+    bar.innerHTML = '<span>Penerimaan nilai sudah ditutup</span>';
+  else if(status==='gagal')
+    bar.innerHTML = `<span class="kb-msg">${pesan||'Gagal terkirim'}</span><button class="kb-ulang">Kirim Ulang</button>`;
+}
+async function kirimSekali(data){
+  const body = JSON.stringify(data);
+  try{
+    const r = await fetch(KONFIG.urlApps, {
+      method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body
+    });
+    let j = null;
+    try{ j = await r.json(); }catch(_){}
+    if(j && j.ok) return {status:'ok'};
+    if(j && j.ok===false){
+      if(/ditutup/i.test(j.pesan||'')) return {status:'ditutup'};
+      return {status:'gagal', pesan:'Server Apps Script: '+(j.pesan||'tidak diketahui')};
+    }
+    return {status:'gagal', pesan:'Respons bukan dari Apps Script yang benar. Pastikan kode sudah ditempel dan di-deploy ULANG (New version).'};
+  }catch(_){
+    try{
+      await fetch(KONFIG.urlApps, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body
+      });
+    }catch(_2){}
+    return {status:'gagal', pesan:'Tidak bisa menghubungi Web App. Cek: (1) internet aktif, (2) kode Apps Script sudah di-deploy ulang, (3) Who has access = "Anyone".'};
+  }
+}
+async function kirimNilai(data, barEl){
+  payloadTerakhir = {data:data, barEl:barEl};
+  setKirim(barEl, 'mengirim');
+  if(sudahTutup()){ setKirim(barEl, 'ditutup'); return; }
+  for(let i=0;i<3;i++){
+    const h = await kirimSekali(data);
+    if(h.status==='ok'){ setKirim(barEl, 'ok'); return; }
+    if(h.status==='ditutup'){ setKirim(barEl, 'ditutup'); return; }
+    if(i===2){ setKirim(barEl, 'gagal', h.pesan); }
+    else{ await new Promise(r=>setTimeout(r, 800*(i+1))); }
+  }
+}
+
+/* ============ KONFETI ============ */
+const kctx = el.kanvas.getContext('2d');
+let kW=0, kH=0, partikel=[], konfetiJalan=false, konfetiHingga=0;
+const WARNA_KONFETI = {
+  sakura:['#E4567E','#F6B93B','#F9C5D5','#2FA772','#FFFFFF'],
+  robot:['#2176C7','#FFC93C','#CFE5F9','#2FA772','#FFFFFF'],
+  alien:['#FFD166','#4CC9F0','#EF476F','#06D6A0','#FFFFFF']
+};
+function ukurKanvas(){
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  kW = window.innerWidth; kH = window.innerHeight;
+  el.kanvas.width = kW*dpr; el.kanvas.height = kH*dpr;
+  kctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function konfeti(n, detik){
+  const warna = WARNA_KONFETI[state.tema] || WARNA_KONFETI.sakura;
+  for(let i=0;i<n;i++){
+    partikel.push({
+      x:Math.random()*kW, y:-20-Math.random()*90,
+      vy:2.2+Math.random()*3.2, vx:(Math.random()-.5)*2.4,
+      rot:Math.random()*Math.PI, vr:(Math.random()-.5)*.25,
+      w:7+Math.random()*5, h:10+Math.random()*8,
+      warna:acakDari(warna), bulat:Math.random()<.35
+    });
+  }
+  konfetiHingga = Math.max(konfetiHingga, performance.now()+detik*1000);
+  if(!konfetiJalan){ konfetiJalan=true; requestAnimationFrame(loopKonfeti); }
+}
+function loopKonfeti(t){
+  kctx.clearRect(0,0,kW,kH);
+  for(const p of partikel){
+    p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.vy+=0.03;
+    kctx.save(); kctx.translate(p.x,p.y); kctx.rotate(p.rot);
+    kctx.fillStyle=p.warna;
+    if(p.bulat){ kctx.beginPath(); kctx.arc(0,0,p.w/2,0,7); kctx.fill(); }
+    else kctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    kctx.restore();
+  }
+  partikel = partikel.filter(p=>p.y < kH+40);
+  if(partikel.length && t < konfetiHingga) requestAnimationFrame(loopKonfeti);
+  else { konfetiJalan=false; partikel.length=0; kctx.clearRect(0,0,kW,kH); }
+}
+
+/* ============ TOAST, TUTUP, PAMIT ============ */
+let toastTimer=null;
+function toast(msg, lama){
+  el.toast.textContent = msg;
+  el.toast.classList.add('tampil');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.toast.classList.remove('tampil'), lama || 2200);
+}
+function tutupGame(){
+  jedaTimer();
+  el.tutup.classList.add('tampil');
+}
+async function keluarAplikasi(){
+  sfx.klik();
+  jedaTimer();
+  el.pamitMaskot.innerHTML = maskot(state.tema);
+  const w = el.pamitMaskot.querySelector('.maskot-w');
+  if(w) w.dataset.mood = 'senang';
+  await keluarFullscreen();
+  window.close();
+  setTimeout(()=>{ el.modalPamit.classList.add('tampil'); }, 400);
+}
+function mulai(){
+  if(!state.nama){
+    toast('Pilih dulu namamu ya!');
+    bukaModalNama();
+    return;
+  }
+  if(sudahTutup()){ tutupGame(); return; }
+  pastikanAudio(); sfx.klik();
+  fullscreen(); mintaWakeLock();
+  document.body.dataset.tema = state.tema;
+  simpan('jujumlah_terakhir', {nama:state.nama, tema:state.tema});
+  renderPeta();
+  tampil('layarPeta');
+}
+
+/* ============ WIRING ============ */
+el.btnPilihNama.addEventListener('click', ()=>{ sfx.klik(); bukaModalNama(); });
+el.modalNama.addEventListener('click', e=>{ if(e.target === el.modalNama) tutupModalNama(); });
+el.cari.addEventListener('input', e=>renderDaftarNama(e.target.value));
+el.daftar.addEventListener('click', e=>{
+  const b = e.target.closest('.item-nama'); if(!b) return;
+  state.nama = b.dataset.nama; sfx.klik();
+  renderTombolNama();
+  tutupModalNama();
+});
+el.kartuTema.addEventListener('click', e=>{
+  const k = e.target.closest('.kt'); if(!k) return;
+  state.tema = k.dataset.tema;
+  document.body.dataset.tema = state.tema;
+  sfx.klik(); renderKartuTema();
+});
+el.btnMulai.addEventListener('click', mulai);
+el.btnBeranda.addEventListener('click', ()=>{
+  sfx.klik(); renderTombolNama(); tampil('layarBeranda');
+});
+el.btnKeluarApp.addEventListener('click', keluarAplikasi);
+el.pamitBatal.addEventListener('click', ()=>{
+  sfx.klik(); el.modalPamit.classList.remove('tampil');
+});
+el.daftarLevel.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-lvl]');
+  if(btn){ mulaiLevel(+btn.dataset.lvl); return; }
+  const kartu = e.target.closest('.kartu-level');
+  if(kartu && kartu.classList.contains('terkunci'))
+    toast('Selesaikan level sebelumnya dulu ya!');
+});
+el.keypad.addEventListener('click', e=>{
+  const b = e.target.closest('.k'); if(!b) return;
+  tekan(b.dataset.d);
+});
+el.btnKeluar.addEventListener('click', ()=>{
+  sfx.klik(); jedaTimer(); el.modal.classList.add('tampil');
+});
+el.mdlBatal.addEventListener('click', ()=>{
+  sfx.klik(); el.modal.classList.remove('tampil'); lanjutTimer();
+});
+el.mdlYa.addEventListener('click', ()=>{
+  sfx.klik(); el.modal.classList.remove('tampil'); akhir('keluar');
+});
+el.btnSuara.addEventListener('click', ()=>{
+  suaraAktif = !suaraAktif;
+  simpan('jujumlah_suara', suaraAktif);
+  renderSuara(); sfx.klik();
+});
+el.hasilTombol.addEventListener('click', e=>{
+  const b = e.target.closest('[data-aksi]'); if(!b) return;
+  sfx.klik();
+  const a = b.dataset.aksi;
+  if(a==='ulang') mulaiLevel(state.level);
+  else if(a==='lanjut') mulaiLevel(state.level+1);
+  else if(a==='peta'){ renderPeta(); tampil('layarPeta'); }
+});
+el.btnKePeta.addEventListener('click', ()=>{
+  sfx.klik(); renderPeta(); tampil('layarPeta');
+});
+el.btnGantiPemain.addEventListener('click', ()=>{
+  sfx.klik(); renderTombolNama(); tampil('layarBeranda');
+});
+document.addEventListener('click', e=>{
+  if(e.target.closest('.kb-ulang') && payloadTerakhir)
+    kirimNilai(payloadTerakhir.data, payloadTerakhir.barEl);
+});
+document.addEventListener('keydown', e=>{
+  if(layarAktif!=='layarMain' || state.blok) return;
+  if(/^[0-9]$/.test(e.key)) tekan(e.key);
+  else if(e.key==='Backspace') tekan('del');
+  else if(e.key==='Enter') tekan('ok');
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden) jedaTimer();
+  else { lanjutTimer(); if(layarAktif==='layarMain') mintaWakeLock(); }
+});
+window.addEventListener('resize', ()=>{ ukurKanvas(); mintaPasKertas(); });
+document.addEventListener('fullscreenchange', mintaPasKertas);
+document.addEventListener('webkitfullscreenchange', mintaPasKertas);
+setInterval(()=>{ if(sudahTutup() && !el.tutup.classList.contains('tampil')) tutupGame(); }, 30000);
+
+/* ============ BUAT KEYPAD ============ */
+(function buatKeypad(){
+  let html = '';
+  '123456789'.split('').forEach(d=> html += `<button class="k" data-d="${d}">${d}</button>`);
+  html += `<button class="k k-del" data-d="del" aria-label="Hapus">${IKON.hapus}</button>`;
+  html += `<button class="k" data-d="0">0</button>`;
+  html += `<button class="k k-ok" data-d="ok">OK</button>`;
+  el.keypad.innerHTML = html;
+})();
+
+/* ============ INIT ============ */
+function init(){
+  const terakhir = muat('jujumlah_terakhir', null);
+  if(terakhir && SISWA.includes(terakhir.nama)){
+    state.nama = terakhir.nama;
+    if(TEMAS.some(t=>t.id===terakhir.tema)) state.tema = terakhir.tema;
+  }
+  document.body.dataset.tema = state.tema;
+  renderHero(); renderTombolNama(); renderKartuTema(); bangunHati(); renderSuara();
+  ukurKanvas();
+  el.infoBawah.textContent = 'Permainan aktif sampai dengan ' + KONFIG.batasTampil;
+  el.tutupTeks.textContent = 'Permainan ini hanya aktif sampai dengan ' + KONFIG.batasTampil +
+    '. Hubungi Bu Yulis jika perlu dibuka lagi.';
+  el.tutupMaskot.innerHTML = TEMAS.map(t=>{
+    const m = maskot(t.id);
+    return m.replace('data-mood="biasa"','data-mood="sedih"');
+  }).join('');
+  if(sudahTutup()) el.tutup.classList.add('tampil');
+}
+init();
+})();
+</script>
+</body>
+</html>
